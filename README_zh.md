@@ -1,5 +1,7 @@
 # CupClaw — 让团队共享使用 OpenClaw
 
+> **配合 [OpenClaw](https://openclaw.ai) 使用** — 让团队共享 OpenClaw 的轻量级网页界面。
+
 ## 这是什么
 
 CupClaw 是一个网页界面工具，帮助 OpenClaw 管理员将 AI 助手共享给团队成员使用。

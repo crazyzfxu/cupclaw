@@ -1,5 +1,7 @@
 # CupClaw — Share OpenClaw with Your Team
 
+> **Works with [OpenClaw](https://openclaw.ai)** — A lightweight web interface for sharing OpenClaw with your team.
+
 ## What Is CupClaw
 
 CupClaw is a lightweight web interface that helps OpenClaw administrators share their AI assistant with their team.
