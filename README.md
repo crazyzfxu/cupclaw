@@ -42,13 +42,11 @@ OpenClaw supports individual memory spaces for each user, recording usage habits
 
 ## Deployment
 
-1. Download CupClaw
-2. Run the setup script and follow the prompts to configure your OpenClaw connection
-3. Start the service
-4. Create the initial admin account
-5. Start using it
+1. Download and extract CupClaw to your OpenClaw machine
+2. OpenClaw will automatically detect and load CupClaw
+3. Access CupClaw through your browser
 
-For detailed steps, see `docs/使用指南.md` (Chinese) or `docs/User-Guide.md` (English).
+For detailed steps, see `docs/User-Guide.md`.
 
 ## Quick Start
 
@@ -56,13 +54,7 @@ For detailed steps, see `docs/使用指南.md` (Chinese) or `docs/User-Guide.md`
 # Download
 tar -xzf cupclaw-v1.0.0.tar.gz
 cd cupclaw
-
-# Install
-chmod +x setup.sh
-./setup.sh
-
-# Start
-# Follow the on-screen instructions
+# That's it — OpenClaw handles the rest
 ```
 
 ## Tech Stack
