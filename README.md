@@ -1,57 +1,80 @@
-# CupClaw — 让团队共享使用 OpenClaw
+# CupClaw — Share OpenClaw with Your Team
 
-## 这是什么
+## What Is CupClaw
 
-CupClaw 是一个网页界面工具，帮助 OpenClaw 管理员将 AI 助手共享给团队成员使用。
+CupClaw is a lightweight web interface that helps OpenClaw administrators share their AI assistant with their team.
 
-团队成员通过浏览器访问 CupClaw，**不需要进入 OpenClaw 界面**，也无需管理员分享 OpenClaw 账号密码。每个人使用自己的账号，通过 CupClaw 与 OpenClaw 交互。
+Team members access CupClaw through a browser — **without needing to use the OpenClaw UI** or share admin credentials. Everyone uses their own account to interact with OpenClaw through CupClaw.
 
-## 解决什么问题
+## What Problem Does It Solve
 
-- **团队共享 AI 助手**：一套 OpenClaw，多人同时使用，各自独立账号
-- **本地部署，数据安全**：所有数据不离开局域网，不上传到外部
-- **多用户账号体系**：每个成员独立登录，OpenClaw 识别不同用户
-- **零门槛接入**：下载即用，团队成员不需要了解 OpenClaw 的使用方式
+- **Shared AI for teams**: One OpenClaw instance, multiple users simultaneously, each with their own account
+- **Local deployment, data security**: All data stays within your LAN, never uploaded to external services
+- **Multi-user account system**: Each team member logs in independently; OpenClaw recognizes different users
+- **Zero learning curve**: Download, deploy, and go — team members don't need to know how OpenClaw works
 
-## 核心特点
+## Key Features
 
-- **多用户访问**：一套 OpenClaw，团队成员各用自己的账号
-- **独立于 OpenClaw 界面**：成员不需要进入 OpenClaw UI，通过 CupClaw 即可完成所有操作
-- **本地部署**：所有数据在本地流转，不依赖外部网络
-- **权限分层**：普通用户 / 部门主管 / 运维，三级权限体系（管理员可调整）
-- **文件上传**：支持 PDF、Excel、图片、文档等格式上传分析
-- **零门槛接入**：下载部署后，浏览器打开即可使用
+- **Multi-user access**: One OpenClaw, many team members, each with their own account
+- **Independent of OpenClaw UI**: Team members don't need to use the OpenClaw interface at all
+- **Local deployment**: All data flows locally, no external network dependency
+- **Role-based permissions**: Regular user / Department head / Ops — three permission levels, configurable by admin
+- **File upload**: Supports PDF, Excel, images, documents and more for analysis
+- **Zero-barrier onboarding**: Deploy and open in browser — done
 
-## 用户记忆功能（推荐启用）
+## User Memory (Recommended)
 
-OpenClaw 支持为每个用户建立独立记忆空间，记录使用习惯和偏好。同一账号多次使用，OpenClaw 会越来越了解该用户，提供更贴合的个性化回复。
+OpenClaw supports individual memory spaces for each user, recording usage habits and preferences. The more a user interacts, the better CupClaw understands their needs.
 
-### 启用用户记忆的好处
+### Benefits of User Memory
 
-- **个性化服务**：OpenClaw 记住用户的查询偏好、常用术语、文件习惯，回复更精准
-- **上下文连续**：用户下次继续之前的话题，OpenClaw 能直接衔接，不需要重复说明背景
-- **用户体验提升**：越用越懂用户，减少重复解释成本
+- **Personalized service**: OpenClaw remembers your query preferences, common terminology, and file habits
+- **Continuous context**: Pick up exactly where you left off — no need to re-explain background
+- **Better experience over time**: The more you use it, the smarter it gets
 
-### 启用用户记忆需要注意的
+### Things to Know About User Memory
 
-- **数据存储**：用户的历史记录会保存在 OpenClaw 部署机器的本地存储中
-- **隐私说明**：管理员应告知团队成员，OpenClaw 会记住他们的使用习惯
-- **关闭方式**：如不需要，管理员可在 OpenClaw 端关闭用户记忆功能
+- **Data storage**: User history is stored locally on the machine where OpenClaw is deployed
+- **Privacy notice**: Admin should inform team members that OpenClaw remembers their usage habits
+- **How to disable**: Admin can turn off user memory in OpenClaw settings if not needed
 
-## 部署步骤
+## Deployment
 
-1. 下载 CupClaw 项目
-2. 运行安装脚本，按提示配置 OpenClaw 连接信息
-3. 启动服务
-4. 创建初始管理员账号
-5. 开始使用
+1. Download CupClaw
+2. Run the setup script and follow the prompts to configure your OpenClaw connection
+3. Start the service
+4. Create the initial admin account
+5. Start using it
 
-详细步骤参考 `docs/使用指南.md`
+For detailed steps, see `docs/使用指南.md` (Chinese) or `docs/User-Guide.md` (English).
 
----
+## Quick Start
 
-## English Documentation
+```bash
+# Download
+tar -xzf cupclaw-v1.0.0.tar.gz
+cd cupclaw
 
-For English speakers, see:
-- `README_en.md` — English version of this README
-- `docs/User-Guide.md` — English user guide
+# Install
+chmod +x setup.sh
+./setup.sh
+
+# Start
+# Follow the on-screen instructions
+```
+
+## Tech Stack
+
+- **Frontend**: Web-based interface
+- **Backend**: Node.js service
+- **Integration**: OpenClaw API
+
+## Documentation
+
+- `README.md` — This file (Chinese)
+- `docs/使用指南.md` — Detailed user guide (Chinese)
+- `docs/User-Guide.md` — Detailed user guide (English)
+
+## License
+
+See `LICENSE` file.
