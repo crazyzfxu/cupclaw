@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-header">
+        <h2>用户注册</h2>
+        <p>创建一个新账号以开始使用</p>
+    </div>
+    
+    <form id="registerForm" class="auth-form">
+        <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" name="username" required placeholder="请设置用户名" autocomplete="username">
+        </div>
+        
+        <div class="form-group">
+            <label for="name">姓名</label>
+            <input type="text" id="name" name="name" placeholder="请输入您的姓名" autocomplete="name">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" required placeholder="请设置密码" autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+            <label for="confirm_password">确认密码</label>
+            <input type="password" id="confirm_password" name="confirm_password" required placeholder="请再次输入密码" autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+            <label for="role">角色身份</label>
+            <select id="role" name="role">
+                <option value="user">👤 普通用户 (Standard User)</option>
+                <option value="dept_head">📋 部门主管 (Dept Head)</option>
+            </select>
+        </div>
+        
+        <div id="registerError" class="auth-error"></div>
+        
+        <button type="submit" class="auth-btn">立即注册</button>
+    </form>
+    
+    <div class="auth-footer">
+        已有账号？ <a href="/login">立即登录</a>
+    </div>
+</div>
+
+<script>
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorNode = document.getElementById('registerError');
+    errorNode.textContent = '';
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    if (data.password !== data.confirm_password) {
+        errorNode.textContent = '两次输入的密码不一致';
+        return;
+    }
+    
+    try {
+        const response = await fetch('/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (response.ok) {
+            alert('注册成功，请登录');
+            window.location.href = '/login';
+        } else {
+            errorNode.textContent = result.error || '注册失败，请重试';
+        }
+    } catch (err) {
+        errorNode.textContent = '网络错误，请稍后再试';
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,3322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClawChat [Fix-V2]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- 本地字体备用方案 -->
+    <style>
+        /* 如果Google Fonts加载失败，使用系统字体 */
+        .font-fallback {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+    </style>
+    <style>
+        :root {
+            --bg-top: #f6efe1;
+            --bg-bottom: #d8efe6;
+            --card: rgba(255, 255, 255, 0.92);
+            --card-deep: #ffffff;
+            --text-main: #1b2a26;
+            --text-soft: #53615d;
+            --line: rgba(24, 48, 43, 0.12);
+            --brand: #0f766e;
+            --brand-strong: #0b5f58;
+            --accent: #f97316;
+            --shadow-soft: 0 18px 38px rgba(18, 54, 48, 0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "Space Grotesk", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            background:
+                radial-gradient(1200px 420px at 12% -10%, rgba(249, 115, 22, 0.24), transparent 60%),
+                radial-gradient(900px 500px at 88% -18%, rgba(15, 118, 110, 0.22), transparent 58%),
+                linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            padding: 14px;
+            gap: 14px;
+            overflow: hidden; /* 确保容器本身不溢出 */
+        }
+
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 22, 18, 0.45);
+            backdrop-filter: blur(12px) saturate(180%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .auth-overlay.show {
+            display: flex;
+        }
+
+        .auth-card {
+            width: min(400px, 90vw);
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 40px 32px;
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            animation: authReveal .5s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+        }
+
+        @keyframes authReveal {
+            from { transform: scale(0.95) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .auth-card h2 {
+            margin-bottom: 32px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a2e2a;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-role-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .auth-role-btn {
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            background: #fff;
+            color: #374151;
+            padding: 16px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .auth-role-btn::after {
+            content: "→";
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+            font-family: system-ui;
+        }
+
+        .auth-role-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            border-color: rgba(15, 118, 110, 0.2);
+        }
+
+        .auth-role-btn:hover::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .auth-role-btn.ops {
+            background: linear-gradient(to right, #ffffff, #fff7ed);
+        }
+        .auth-role-btn.ops:hover {
+            background: #fff7ed;
+            color: #9a3412;
+            border-color: #fdba74;
+        }
+
+        .auth-role-btn.user {
+            background: linear-gradient(to right, #ffffff, #f0fdfa);
+        }
+        .auth-role-btn.user:hover {
+            background: #f0fdfa;
+            color: #0f766e;
+            border-color: #5eead4;
+        }
+
+        .auth-role-btn.dept_head {
+            background: linear-gradient(to right, #ffffff, #faf5ff);
+        }
+        .auth-role-btn.dept_head:hover {
+            background: #faf5ff;
+            color: #6b21a8;
+            border-color: #ddd6fe;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            font-size: 14px;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s;
+        }
+
+        .auth-card input:focus {
+            outline: none;
+            border-color: var(--brand);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
+        }
+
+        .auth-error {
+            margin-top: 16px;
+            color: #ef4444;
+            font-size: 13px;
+            font-weight: 500;
+            min-height: 20px;
+        }
+
+        .contacts-sidebar {
+            width: 300px;
+            background: var(--card);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.56);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(8px);
+        }
+
+        .sidebar-header {
+            padding: 22px 18px 18px;
+            background:
+                radial-gradient(260px 80px at 15% 0%, rgba(249, 115, 22, 0.35), transparent 70%),
+                linear-gradient(120deg, #0f766e, #0e5f58);
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            margin-top: 14px;
+            gap: 12px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.94);
+        }
+
+        .sidebar-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .user-avatar-small {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-avatar-small:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* 用户信息编辑弹窗 */
+        .profile-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 22, 18, 0.45);
+            backdrop-filter: blur(12px) saturate(180%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .profile-overlay.show { display: flex; }
+
+        .profile-card {
+            width: min(500px, 92vw);
+            max-height: 88vh;
+            overflow-y: auto;
+            background:
+                radial-gradient(460px 220px at 50% 0%, rgba(15, 118, 110, 0.1), transparent 62%),
+                rgba(255, 255, 255, 0.94);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 30px;
+            box-shadow:
+                0 28px 70px rgba(18, 54, 48, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.72);
+            animation: profileReveal .4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 4px;
+            background: linear-gradient(90deg, rgba(15, 118, 110, 0.95), rgba(249, 115, 22, 0.85));
+        }
+
+        @keyframes profileReveal {
+            from { transform: scale(0.9) translateY(10px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .profile-card h3 {
+            margin: 2px 0 18px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a2e2a;
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+
+        /* 用户信息显示区域 */
+        .profile-info-section {
+            background: linear-gradient(180deg, #fbfffe 0%, #f3f8f6 100%);
+            border-radius: 20px;
+            padding: 18px 18px 14px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(15, 118, 110, 0.1);
+            box-shadow: 0 10px 24px rgba(18, 54, 48, 0.06);
+        }
+
+        .profile-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(17, 24, 39, 0.07);
+        }
+
+        .profile-info-item:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+
+        .profile-info-label {
+            font-weight: 600;
+            color: #52615c;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .profile-info-value {
+            color: #13211e;
+            font-size: 14px;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        /* 编辑区域 */
+        .profile-edit-section {
+            border-top: 1px solid rgba(17, 24, 39, 0.08);
+            padding-top: 18px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .profile-section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #35514a;
+            letter-spacing: 0.2px;
+            flex-wrap: wrap;
+        }
+
+        .profile-section-title span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-section-hint {
+            font-size: 12px;
+            font-weight: 500;
+            color: #6b7b76;
+        }
+
+        .profile-field-card {
+            background: rgba(255, 255, 255, 0.82);
+            border-radius: 18px;
+            border: 1px solid rgba(17, 24, 39, 0.08);
+            padding: 16px;
+            box-shadow: 0 10px 22px rgba(18, 54, 48, 0.05);
+        }
+
+        .profile-field-stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .profile-field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .profile-field label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #35514a;
+        }
+
+        .profile-field input {
+            width: 100%;
+            border: 1px solid rgba(17, 24, 39, 0.1);
+            border-radius: 14px;
+            padding: 13px 14px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #13211e;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfcfc 100%);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .profile-field input::placeholder {
+            color: #9aa7a3;
+        }
+
+        .profile-field input:focus {
+            outline: none;
+            border-color: rgba(15, 118, 110, 0.55);
+            box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.11);
+            transform: translateY(-1px);
+            background: #fff;
+        }
+
+        /* 密码修改区域 */
+        .password-change-section {
+            margin-top: 2px;
+            padding: 16px;
+            background: linear-gradient(180deg, rgba(15, 118, 110, 0.07), rgba(15, 118, 110, 0.03));
+            border-radius: 18px;
+            border: 1px solid rgba(15, 118, 110, 0.12);
+        }
+
+        .password-change-section h4 {
+            margin: 0 0 6px 0;
+            color: #12312d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .password-change-note {
+            margin-bottom: 14px;
+            color: #60706b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .profile-avatar-block {
+            background: linear-gradient(180deg, rgba(15, 118, 110, 0.06), rgba(255, 255, 255, 0.7));
+            border: 1px solid rgba(15, 118, 110, 0.1);
+            border-radius: 18px;
+            padding: 14px;
+        }
+
+        .profile-action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .profile-action-row button {
+            border: none;
+            border-radius: 14px;
+            padding: 13px 14px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .profile-action-row button:hover {
+            transform: translateY(-1px);
+        }
+
+        .profile-action-cancel {
+            flex: 1;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .profile-action-cancel:hover {
+            box-shadow: 0 8px 18px rgba(17, 24, 39, 0.08);
+        }
+
+        .profile-action-save {
+            flex: 2;
+            background: linear-gradient(120deg, var(--brand), var(--brand-strong));
+            color: #fff;
+            box-shadow: 0 10px 22px rgba(15, 118, 110, 0.24);
+        }
+
+        .profile-action-save:hover {
+            box-shadow: 0 14px 26px rgba(15, 118, 110, 0.28);
+        }
+
+        .profile-action-cancel,
+        .profile-action-save,
+        .user-detail-close,
+        .detail-primary-btn,
+        .detail-secondary-btn {
+            min-height: 46px;
+        }
+
+        /* 用户详细信息弹窗 */
+        .user-detail-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 22, 18, 0.45);
+            backdrop-filter: blur(12px) saturate(180%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+            cursor: pointer;
+        }
+
+        .user-detail-overlay.show { display: flex; }
+
+        .user-detail-card {
+            width: min(420px, 90vw);
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            padding: 30px;
+            box-shadow: 0 24px 56px rgba(0, 0, 0, 0.12);
+            animation: profileReveal .4s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            cursor: default;
+        }
+
+        .user-detail-avatar {
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            margin: 0 auto 18px;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+        }
+
+        .user-detail-name {
+            font-size: 23px;
+            font-weight: 600;
+            color: #1a2e2a;
+            margin-bottom: 8px;
+        }
+
+        .user-detail-id {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .user-detail-info {
+            text-align: left;
+            background: linear-gradient(180deg, #fafcfb, #f4f8f6);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(17, 24, 39, 0.06);
+        }
+
+        .user-detail-info-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .user-detail-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .user-detail-info-label {
+            color: #6b7280;
+        }
+
+        .user-detail-info-value {
+            color: #1a2e2a;
+            font-weight: 500;
+        }
+
+        .user-detail-close {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            border-radius: 14px;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .user-detail-close:hover {
+            background: #e5e7eb;
+        }
+
+        .detail-action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .detail-primary-btn {
+            flex: 1;
+            border: none;
+            border-radius: 14px;
+            padding: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(120deg, var(--brand), var(--brand-strong));
+            box-shadow: 0 10px 22px rgba(15, 118, 110, 0.22);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .detail-primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 26px rgba(15, 118, 110, 0.28);
+        }
+
+        .detail-secondary-btn {
+            flex: 1;
+        }
+
+        .avatar-selection {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 0;
+            padding: 2px 0 8px;
+        }
+
+        .avatar-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 16px;
+            border: 1px solid rgba(17, 24, 39, 0.08);
+            background: linear-gradient(180deg, #fff, #f8faf9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .avatar-option:hover {
+            background: #effcf8;
+            border-color: rgba(15, 118, 110, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(15, 118, 110, 0.12);
+        }
+
+        .avatar-option.active {
+            border-color: rgba(15, 118, 110, 0.55);
+            background: linear-gradient(180deg, rgba(15, 118, 110, 0.12), rgba(15, 118, 110, 0.06));
+            box-shadow: 0 10px 22px rgba(15, 118, 110, 0.16);
+        }
+
+        /* 用户管理弹窗 */
+        .user-management-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 22, 18, 0.45);
+            backdrop-filter: blur(12px) saturate(180%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .user-management-overlay.show { display: flex; }
+
+        .user-management-card {
+            width: min(600px, 95vw);
+            max-height: 80vh;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.46);
+            padding: 32px;
+            box-shadow: 0 24px 56px rgba(0, 0, 0, 0.12);
+            animation: profileReveal .4s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+        }
+
+        .user-management-card h3 {
+            margin-bottom: 24px;
+            font-size: 20px;
+            color: #1a2e2a;
+            text-align: center;
+        }
+
+        .user-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            background: #fff;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #1a2e2a;
+        }
+
+        .user-details {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .user-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .user-btn.edit {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .user-btn.edit:hover {
+            background: #bfdbfe;
+        }
+
+        .user-btn.status {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .user-btn.status:hover {
+            background: #fde68a;
+        }
+
+        .user-form {
+            border-top: 1px solid var(--line);
+            padding-top: 24px;
+            margin-top: 24px;
+        }
+
+        .user-form h4 {
+            margin-bottom: 16px;
+            color: #1a2e2a;
+        }
+
+        .sidebar-user-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .sidebar-user-id {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.86);
+            word-break: break-word;
+        }
+
+        .logout-btn {
+            border: 1px solid rgba(255, 255, 255, 0.44);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            padding: 12px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .contact-item:hover {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(15, 118, 110, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .contact-item.active {
+            background: linear-gradient(120deg, rgba(15, 118, 110, 0.14), rgba(249, 115, 22, 0.14));
+            border-color: rgba(15, 118, 110, 0.25);
+        }
+
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .contact-avatar:hover {
+            transform: scale(1.1);
+        }
+
+        .contact-info { flex: 1; min-width: 0; }
+
+        .contact-name {
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 3px;
+            font-size: 14px;
+        }
+
+        .contact-last-message {
+            font-size: 12px;
+            color: var(--text-soft);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-time {
+            font-size: 11px;
+            color: #7b8b86;
+            margin-left: 8px;
+        }
+
+        .unread-badge {
+            background: #be123c;
+            color: white;
+            border-radius: 999px;
+            padding: 2px 7px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--card);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.56);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(8px);
+            position: relative;
+            min-height: 0; /* 允许 Flex 自主收缩 */
+            max-height: 100%; /* 限制最大高度，防止撑开父容器 */
+        }
+
+        .chat-header {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--line);
+            flex-shrink: 0; /* 锁定页头高度，不被内容挤压 */
+            z-index: 10;
+        }
+
+        .current-contact-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+            background: #eef2ff;
+            color: #334155;
+        }
+
+        .current-contact-info { flex: 1; }
+
+        .current-contact-name {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.1px;
+        }
+
+        .current-contact-status {
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        .chat-tip {
+            display: none !important;
+        }
+
+        .quick-prompts {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 10px 16px;
+            background: linear-gradient(110deg, rgba(15, 118, 110, 0.08), rgba(249, 115, 22, 0.06));
+            border-bottom: 1px solid var(--line);
+        }
+
+        .quick-prompts::before {
+            content: "示例：";
+            font-size: 13px;
+            color: #174a43;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .quick-prompt-btn {
+            border: 1px solid rgba(15, 118, 110, 0.2);
+            background: rgba(255, 255, 255, 0.8);
+            color: #0f4f49;
+            border-radius: 12px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .quick-prompt-btn:hover {
+            background: #ffffff;
+            border-color: var(--brand);
+            transform: translateY(-1px);
+        }
+        
+
+        .quick-prompt-btn:hover {
+            background: #ecfdf5;
+            transform: translateY(-1px);
+        }
+
+        .task-board {
+            border-bottom: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.86);
+            padding: 8px 16px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .task-board.show { display: flex; }
+
+        .task-list {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .task-item {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            position: relative;
+            cursor: help;
+            border: 1px solid transparent;
+        }
+
+        .task-item.queued { background: #fefce8; border-color: #facc15; color: #854d0e; animation: pulse 2s infinite; }
+        .task-item.processing { background: #f0f9ff; border-color: #38bdf8; color: #075985; animation: spin 2s linear infinite; }
+        .task-item.completed { background: #ecfdf5; border-color: #34d399; color: #065f46; }
+        .task-item.failed { background: #fff1f2; border-color: #f87171; color: #991b1b; }
+
+        .task-item::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 1000;
+        }
+        .task-item:hover::after { opacity: 1; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .data-query-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid var(--line);
+            padding: 10px 16px;
+            display: none;
+        }
+
+        .data-query-panel.show { display: block; }
+
+        .data-query-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .data-query-row select,
+        .data-query-row textarea {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            background: white;
+        }
+
+        .data-query-row textarea {
+            width: 100%;
+            min-height: 64px;
+            resize: vertical;
+        }
+
+        .query-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #fff;
+            background: linear-gradient(120deg, var(--brand), var(--brand-strong));
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .query-result {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #29433c;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px;
+            max-height: 180px;
+            overflow: auto;
+            white-space: pre-wrap;
+        }
+
+        .pending-panel {
+            background: linear-gradient(160deg, #f8fafc, #f1f5f9);
+            border-top: 1px solid var(--line);
+            padding: 14px 22px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .pending-panel.show { display: block; }
+
+        .pending-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+
+        .pending-item {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+
+        .pending-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .pending-item-type {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .pending-item-status {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .pending-item-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .pending-item-content {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .pending-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pending-approve-btn {
+            flex: 1;
+            padding: 6px 12px;
+            background: #10b981;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .pending-reject-btn {
+            flex: 1;
+            padding: 6px 12px;
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .pending-empty {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px 22px;
+            overflow-y: auto;
+            background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
+            scroll-behavior: auto; /* 分页加载时需要精确控制位置 */
+        }
+
+        .load-more {
+            text-align: center;
+            padding: 12px;
+            color: var(--text-soft);
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--line);
+        }
+        .load-more:hover { color: var(--brand); }
+        .load-more.loading { cursor: default; opacity: 0.6; }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeIn .18s ease;
+            gap: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { transform: translateY(4px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .message.user { flex-direction: row-reverse; }
+        .message.assistant { flex-direction: row; }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #134e4a, #0f766e);
+            color: white;
+            border: none;
+        }
+
+        .message-body {
+            display: flex;
+            flex-direction: column;
+            max-width: 72%;
+        }
+
+        .message.user .message-body { align-items: flex-end; }
+        .message.assistant .message-body { align-items: flex-start; }
+
+        .message-content {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            word-wrap: break-word;
+            line-height: 1.58;
+            font-size: 14px;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(130deg, #0f766e, #0b5f58);
+            color: white;
+            border-bottom-right-radius: 5px;
+            box-shadow: 0 10px 20px rgba(15, 118, 110, 0.25);
+        }
+
+        .message.assistant .message-content {
+            background: var(--card-deep);
+            color: var(--text-main);
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 8px 20px rgba(18, 54, 48, 0.08);
+            border: 1px solid rgba(16, 56, 47, 0.08);
+        }
+
+        .message-meta {
+            font-size: 11px;
+            color: #6d7d79;
+            margin-top: 5px;
+        }
+
+        .chat-input {
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 1px solid var(--line);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-shrink: 0; /* 强制锁定输入框高度 */
+            z-index: 10;
+        }
+
+        .chat-input input[type="text"] {
+            flex: 1;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            background: white;
+        }
+
+        .chat-input input[type="text"]:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+        }
+
+        .chat-input button {
+            padding: 11px 16px;
+            background: linear-gradient(120deg, var(--brand), var(--brand-strong));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .chat-input button:hover {
+            transform: translateY(-1px);
+        }
+
+        .chat-input button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .file-upload-btn {
+            padding: 11px 14px;
+            background: #335e56;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            font-weight: 700;
+        }
+
+        .file-preview {
+            display: none;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 1px solid var(--line);
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            z-index: 9;
+        }
+
+        .file-preview.show { display: flex; }
+
+        .file-info {
+            flex: 1;
+            font-size: 13px;
+            color: #31544d;
+        }
+
+        .file-remove {
+            color: #be123c;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 9px 16px;
+            color: #527069;
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 1px solid var(--line);
+            flex-shrink: 0;
+            z-index: 9;
+        }
+
+        .typing-indicator.show { display: block; }
+
+        .message-content pre {
+            background: #0d1f1b;
+            color: #dcf8ef;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 8px;
+        }
+
+        .message-content code {
+            font-family: "JetBrains Mono", "SF Mono", "Menlo", monospace;
+            font-size: 12px;
+        }
+
+        .message-content p + p { margin-top: 8px; }
+
+        .file-attachment {
+            background: #f4f8f7;
+            padding: 7px 10px;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: inline-block;
+            border: 1px solid var(--line);
+        }
+
+        .file-attachment a {
+            color: #0b5f58;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.35); }
+        ::-webkit-scrollbar-thumb { background: rgba(35, 85, 74, 0.35); border-radius: 12px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(35, 85, 74, 0.52); }
+
+        /* 移动端切换按钮已移除，现在使用更直观的逻辑 */
+
+        .back-to-list {
+            display: none;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 8px;
+            font-size: 20px;
+            color: var(--brand);
+            line-height: 1;
+        }
+
+        @media (max-width: 800px) {
+            .app-container {
+                padding: 0;
+                gap: 0;
+            }
+
+            .contacts-sidebar {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                position: absolute;
+                left: 0;
+                top: 0;
+                z-index: 100;
+                transition: transform 0.3s ease;
+            }
+
+            .chat-main {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                position: absolute;
+                left: 0;
+                top: 0;
+                z-index: 50;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            }
+
+            /* 当显示聊天窗口时 */
+            .app-container.show-chat .contacts-sidebar {
+                transform: translateX(-100%);
+            }
+
+            .app-container.show-chat .chat-main {
+                transform: translateX(0);
+            }
+
+            .back-to-list {
+                display: block;
+            }
+            
+            .sidebar-header {
+                padding-top: 20px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .chat-header {
+                padding: 12px 14px;
+            }
+
+            .quick-prompts {
+                padding: 9px 12px;
+            }
+
+            .chat-messages {
+                padding: 14px;
+            }
+
+            .chat-input {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+
+            .chat-input input[type="text"] {
+                padding: 10px 12px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css">
+</head>
+<body>
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            <h2>选择身份进入工作台</h2>
+            <div class="auth-role-buttons">
+                <button class="auth-role-btn ops" onclick="quickLogin('ops')">
+                    <span>🛠️ 运维人员</span>
+                    <small style="font-weight: 400; font-size: 11px; opacity: 0.6; margin-left: auto; padding-right: 12px;">Admin / Ops</small>
+                </button>
+                <button class="auth-role-btn user" onclick="quickLogin('user')">
+                    <span>👤 普通用户</span>
+                    <small style="font-weight: 400; font-size: 11px; opacity: 0.6; margin-left: auto; padding-right: 12px;">Standard User</small>
+                </button>
+                <button class="auth-role-btn dept_head" onclick="quickLogin('dept_head')">
+                    <span>📋 部门主管</span>
+                    <small style="font-weight: 400; font-size: 11px; opacity: 0.6; margin-left: auto; padding-right: 12px;">Department Head</small>
+                </button>
+            </div>
+            <div class="auth-error" id="authError"></div>
+        </div>
+    </div>
+
+    <div class="profile-overlay" id="profileOverlay">
+        <div class="profile-card">
+            <h3>个人资料</h3>
+            
+            <!-- 用户信息显示区域 -->
+            <div class="profile-info-section">
+                <div class="profile-info-item">
+                    <span class="profile-info-label">用户ID</span>
+                    <span class="profile-info-value" id="profileUserId">-</span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">用户名</span>
+                    <span class="profile-info-value" id="profileUsernameDisplay">-</span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">角色</span>
+                    <span class="profile-info-value" id="profileUserRole">-</span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">状态</span>
+                    <span class="profile-info-value" id="profileUserStatus">🟢 在线</span>
+                </div>
+            </div>
+            
+            <!-- 编辑区域 -->
+            <div class="profile-edit-section">
+                <div class="profile-section-title">
+                    <span>头像设置</span>
+                    <span class="profile-section-hint">点击切换常用头像</span>
+                </div>
+                <div class="avatar-selection">
+                    <div class="avatar-option" onclick="selectAvatar('👤')">👤</div>
+                    <div class="avatar-option" onclick="selectAvatar('🛠️')">🛠️</div>
+                    <div class="avatar-option" onclick="selectAvatar('📋')">📋</div>
+                    <div class="avatar-option" onclick="selectAvatar('🏔️')">🏔️</div>
+                    <div class="avatar-option" onclick="selectAvatar('🤖')">🤖</div>
+                    <div class="avatar-option" onclick="selectAvatar('💼')">💼</div>
+                    <div class="avatar-option" onclick="selectAvatar('💡')">💡</div>
+                    <div class="avatar-option" onclick="selectAvatar('✨')">✨</div>
+                </div>
+
+                <div class="profile-field-card">
+                    <div class="profile-section-title">
+                        <span>常用名</span>
+                        <span class="profile-section-hint">用于聊天界面展示</span>
+                    </div>
+                    <div class="profile-field-stack">
+                        <div class="profile-field">
+                            <label for="profileUsername">常用名</label>
+                            <input type="text" id="profileUsername" placeholder="请输入您的常用名">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="password-change-section">
+                    <h4><span>修改密码</span><span class="profile-section-hint">留空则不更改</span></h4>
+                    <div class="password-change-note">仅在需要修改密码时填写当前密码和新密码。为了避免误操作，不填写新密码时会保持原密码不变。</div>
+                    <div class="profile-field-stack">
+                        <div class="profile-field">
+                            <label for="currentPassword">当前密码</label>
+                            <input type="password" id="currentPassword" placeholder="请输入当前密码">
+                        </div>
+                        <div class="profile-field">
+                            <label for="newPassword">新密码</label>
+                            <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）">
+                        </div>
+                        <div class="profile-field">
+                            <label for="confirmPassword">确认新密码</label>
+                            <input type="password" id="confirmPassword" placeholder="请再次输入新密码">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-action-row">
+                <button class="profile-action-cancel" onclick="closeProfile()">取消</button>
+                <button class="profile-action-save" onclick="saveProfile()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户详细信息弹窗 -->
+    <div class="user-detail-overlay" id="userDetailOverlay" onclick="closeUserDetail()">
+        <div class="user-detail-card" onclick="event.stopPropagation()">
+            <div class="user-detail-avatar" id="userDetailAvatar"></div>
+            <div class="user-detail-name" id="userDetailName"></div>
+            <div class="user-detail-id" id="userDetailId"></div>
+            <div class="user-detail-info">
+                <div class="user-detail-info-item">
+                    <span class="user-detail-info-label">状态</span>
+                    <span class="user-detail-info-value" id="userDetailStatus">🟢 在线</span>
+                </div>
+                <div class="user-detail-info-item">
+                    <span class="user-detail-info-label">最后活动</span>
+                    <span class="user-detail-info-value" id="userDetailLastTime">刚刚</span>
+                </div>
+                <div class="user-detail-info-item">
+                    <span class="user-detail-info-label">未读消息</span>
+                    <span class="user-detail-info-value" id="userDetailUsername">0</span>
+                </div>
+                <div class="user-detail-info-item">
+                    <span class="user-detail-info-label">最近消息</span>
+                    <span class="user-detail-info-value" id="userDetailLastMessage">暂无消息</span>
+                </div>
+            </div>
+            <div class="detail-action-row">
+                <button class="user-detail-close detail-secondary-btn" onclick="closeUserDetail()">关闭</button>
+                <button class="detail-primary-btn" onclick="openProfile()">编辑资料</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="user-management-overlay" id="userManagementOverlay">
+        <div class="user-management-card">
+            <h3>用户管理</h3>
+            <div class="user-list" id="userList">
+                <!-- 用户列表将通过 JavaScript 动态填充 -->
+            </div>
+            <div class="user-form" id="userForm" style="display: none;">
+                <h4 id="formTitle">编辑用户</h4>
+                <div class="form-group">
+                    <label for="editUsername">用户名</label>
+                    <input type="text" id="editUsername" placeholder="用户名" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="editName">姓名</label>
+                    <input type="text" id="editName" placeholder="姓名">
+                </div>
+                <div class="form-group">
+                    <label for="editRole">角色</label>
+                    <select id="editRole">
+                        <option value="user">普通用户</option>
+                        <option value="dept_head">部门主管</option>
+                        <option value="ops">运维人员</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editStatus">状态</label>
+                    <select id="editStatus">
+                        <option value="1">启用</option>
+                        <option value="0">禁用</option>
+                    </select>
+                </div>
+                <div class="detail-action-row">
+                    <button class="user-detail-close detail-secondary-btn" onclick="closeUserForm()">取消</button>
+                    <button class="detail-primary-btn" onclick="saveUser()">保存</button>
+                </div>
+            </div>
+            <div class="detail-action-row">
+                <button class="user-detail-close detail-secondary-btn" onclick="closeUserManagement()">关闭</button>
+                <button class="detail-primary-btn" onclick="showUserForm()">添加用户</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- 联系人侧边栏 -->
+        <div class="contacts-sidebar">
+            <div class="sidebar-header">
+                <h1>🤖 ClawChat</h1>
+                <div class="sidebar-user">
+                    <div class="user-avatar-small" id="userAvatar" onclick="showCurrentUserDetail()" title="点击查看详细信息">👤</div>
+                    <div class="sidebar-user-meta" onclick="openProfile()">
+                        <span id="currentUser" style="font-weight: 600;">未登录</span>
+                        <span class="sidebar-user-id" id="currentUserId" style="font-size: 11px; opacity: 0.7;">user_id: -</span>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">退出</button>
+                </div>
+                <div class="sidebar-actions" id="sidebarActions" style="display: none;">
+                    <button class="action-btn" onclick="openUserManagement()" title="用户管理">👥</button>
+                </div>
+            </div>
+            <div class="contacts-list" id="contactsList">
+                <!-- 联系人列表将通过 JavaScript 动态填充 -->
+            </div>
+        </div>
+        
+        <!-- 聊天主区域 -->
+        <div class="chat-main">
+            <div class="chat-header" id="chatHeader">
+                <div class="back-to-list" onclick="closeChat()">❮</div>
+                <div class="current-contact-avatar" id="currentContactAvatar">🏔️</div>
+                <div class="current-contact-info">
+                    <div class="current-contact-name" id="currentContactName">不周🏔️</div>
+                    <div class="current-contact-status" id="currentContactStatus">🟢 在线</div>
+                </div>
+            </div>
+
+            <!-- 调试状态已完全移除 -->
+
+            <div class="quick-prompts" id="quickPrompts" style="flex-shrink:0;">
+                <button class="quick-prompt-btn" onclick="applyQuickPrompt('专利监控简报')">专利监控简报</button>
+                <button class="quick-prompt-btn" onclick="applyQuickPrompt('周度动态总结')">周度动态总结</button>
+                <button class="quick-prompt-btn" onclick="applyQuickPrompt('可问问题引导')">可问问题引导</button>
+            </div>
+
+            <div class="task-board" id="taskBoard" style="flex-shrink:0;">
+                <div class="task-title">任务状态</div>
+                <div class="task-list" id="taskList"></div>
+            </div>
+
+            
+            <div class="chat-messages" id="messages"></div>
+            <!-- 调试信息 UI 已移除 -->
+            
+            <div id="typing" style="display:none;"></div>
+            
+            <div class="file-preview" id="filePreview">
+                <span class="file-info" id="fileInfo"></span>
+                <span class="file-remove" onclick="removeFile()">×</span>
+            </div>
+            
+            <div class="chat-input">
+                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+                <button class="file-upload-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+                <input type="text" id="messageInput" placeholder="输入消息..." onkeypress="handleKeyPress(event)">
+                <button id="sendBtn" onclick="sendMessage()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+    <script>
+        const socket = io({ autoConnect: false, withCredentials: true });
+        let currentAgent = 'main'; // 当前选中的 agent
+        let loadVersion = 0; // 每次 loadMessages 自增，防止竞态
+        let isLoadingMore = false; // 是否正在加载更多
+        let hasMoreMessages = true; // 是否还有更多消息
+
+        const renderedMessageIds = new Set();
+        const taskQueue = [];
+        let selectedFile = null;
+        let agentsData = {}; // 存储所有 agent 信息
+        let isAuthenticated = false;
+        let currentUser = null;
+        let taskSeq = 0;
+        let sendInFlight = false;
+        let pendingResponseTimer = null;
+        // Increased from 90s to 180s to tolerate longer OpenClaw processing
+        const HTTP_FALLBACK_TIMEOUT_MS = 180000;
+
+        // Agent 配置
+        const AGENTS_CONFIG = {
+            'main': { name: '不周🏔️', color: '#1e3c72' }
+        };
+
+        marked.setOptions({
+            breaks: true,
+            highlight: (code, lang) => {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+
+        // Socket 事件监听
+        socket.on('connect', () => {
+            console.log('WebSocket 连接建立');
+            updateContactStatus(currentAgent, '🟢 在线');
+        });
+        
+        socket.on('status', (payload) => {
+            const isConnected = payload.openclaw === 'connected';
+            updateContactStatus(currentAgent, isConnected ? '🟢 OpenClaw 在线' : '🟡 OpenClaw 离线');
+        });
+        
+        socket.on('disconnect', () => {
+            console.log('WebSocket 连接断开');
+            updateContactStatus(currentAgent, '🔴 连接断开');
+        });
+        
+        socket.on('new_message', (msg) => {
+            console.log('收到新消息:', msg);
+            // 更新侧边栏预览内容（仅当消息属于当前用户，或者是系统公共消息时）
+            const isMyPrivateMsg = msg.user_id && currentUser && msg.user_id === currentUser.id;
+            const isPublicSystemMsg = !msg.user_id && (msg.sender === 'system' || msg.type === 'pending_request');
+            
+            if (msg.agent_id && agentsData[msg.agent_id] && (isMyPrivateMsg || isPublicSystemMsg)) {
+                agentsData[msg.agent_id].last_message = msg.content;
+                agentsData[msg.agent_id].last_time = msg.timestamp;
+                renderContactsList();
+            }
+            
+            // 只显示属于我的或公共的消息
+            if (msg.agent_id === currentAgent && !renderedMessageIds.has(msg.id) && (isMyPrivateMsg || isPublicSystemMsg)) {
+                appendMessage(msg);
+            }
+            if (msg.sender === 'assistant' || msg.status === 'success') {
+                completeNextTask(msg.agent_id, msg.content || '');
+                resetInputState();
+                clearResponseWatchdog();
+            }
+            // 待审批请求消息到达时，刷新待审批面板（仅 dept_head/ops）
+            if (msg.type === 'pending_request' && currentUser && (currentUser.role === 'dept_head' || currentUser.role === 'ops')) {
+                loadPendingRequests();
+            }
+        });
+        
+        socket.on('message_error', (err) => {
+            console.error('消息错误:', err);
+            failNextTask(currentAgent, err && err.error ? err.error : '请求失败');
+            resetInputState();
+        });
+
+        socket.on('message_ignored', (payload) => {
+            const msg = (payload && payload.message) || '检测到重复提交，已忽略';
+            completeNextTask(currentAgent, msg);
+            resetInputState();
+        });
+
+        socket.on('message_accepted', (payload) => {
+            const text = (payload && payload.message) || '请求已提交，正在处理中';
+            // 文本信息合并到任务状态栏显示
+            const target = taskQueue.find(task => task.agent === currentAgent && (task.status === 'queued' || task.status === 'processing'));
+            if (target) {
+                target.status = 'processing';
+                target.summary = text;
+                target.updatedAt = Date.now();
+                renderTaskBoard();
+            }
+            document.getElementById('sendBtn').textContent = '处理中...';
+        });
+
+        function startResponseWatchdog() {
+            clearResponseWatchdog();
+            pendingResponseTimer = setTimeout(() => {
+                failNextTask(currentAgent, '等待超时，请重试');
+                resetInputState();
+            }, 45000);
+        }
+
+        function clearResponseWatchdog() {
+            if (pendingResponseTimer) {
+                clearTimeout(pendingResponseTimer);
+                pendingResponseTimer = null;
+            }
+        }
+
+        async function sendViaHttpFallback(agent, message) {
+            const now = new Date().toISOString();
+            const localUserMsg = {
+                id: `local-user-${Date.now()}`,
+                agent_id: agent,
+                sender: 'user',
+                content: message,
+                timestamp: now
+            };
+            if (agent === currentAgent) {
+                appendMessage(localUserMsg);
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), HTTP_FALLBACK_TIMEOUT_MS);
+
+            let response;
+            try {
+                response = await fetch('/api/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ agent, message }),
+                    signal: controller.signal
+                });
+            } catch (error) {
+                if (error && error.name === 'AbortError') {
+                    throw new Error('请求超时：已提交到服务端但等待过久，请稍后查看回复');
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+
+            const payload = await response.json();
+            if (payload.status === 'ignored') {
+                completeNextTask(agent, payload.message || '检测到重复提交，已忽略');
+                return;
+            }
+
+            if (!response.ok || payload.status !== 'success') {
+                throw new Error(payload.error || '发送失败');
+            }
+
+            const localAssistantMsg = {
+                id: `local-assistant-${Date.now() + 1}`,
+                agent_id: agent,
+                sender: 'assistant',
+                content: payload.reply || '',
+                timestamp: now
+            };
+
+            if (agent === currentAgent) {
+                appendMessage(localUserMsg);
+                appendMessage(localAssistantMsg);
+            }
+            completeNextTask(agent, payload.reply || '已收到');
+            
+            // 更新预览以确保与最新消息保持一致
+            await updatePreviews();
+        }
+
+        function truncateText(text, maxLen = 56) {
+            const clean = (text || '').replace(/\s+/g, ' ').trim();
+            return clean.length > maxLen ? `${clean.slice(0, maxLen)}...` : clean;
+        }
+
+        function statusLabel(status) {
+            if (status === 'queued') return '排队中';
+            if (status === 'processing') return '执行中';
+            if (status === 'completed') return '已完成';
+            if (status === 'failed') return '失败';
+            return status;
+        }
+
+        function renderTaskBoard() {
+            const board = document.getElementById('taskBoard');
+            const list = document.getElementById('taskList');
+            
+            const now = Date.now();
+            const visibleTasks = taskQueue
+                .filter(task => {
+                    if (task.agent !== currentAgent) return false;
+                    if (task.status === 'queued' || task.status === 'processing') return true;
+                    if (task.updatedAt && (now - task.updatedAt < 5000)) return true;
+                    return false;
+                })
+                .slice(-10) 
+                .reverse();
+
+            if (!visibleTasks.length) {
+                board.classList.remove('show');
+                list.innerHTML = '';
+                return;
+            }
+
+            board.classList.add('show');
+            // 只保留任务列表，移除标题（已经在样式中改为了 flex-row 图标形式）
+            list.innerHTML = visibleTasks.map(task => {
+                let icon = '⏳';
+                if (task.status === 'processing') icon = '⚙️';
+                if (task.status === 'completed') icon = '✅';
+                if (task.status === 'failed') icon = '❌';
+                
+                return `
+                    <div class="task-item ${task.status}" data-tooltip="#${task.id} ${statusLabel(task.status)}: ${task.summary}">
+                        ${icon}
+                    </div>
+                `;
+            }).join('');
+            
+            // 移除可能存在的旧标题节点（如果 HTML 结构中有的话）
+            const title = board.querySelector('.task-title');
+            if (title) title.style.display = 'none';
+        }
+
+        function createTaskCard(content) {
+            const task = {
+                id: ++taskSeq,
+                agent: currentAgent,
+                status: 'queued',
+                updatedAt: Date.now(),
+                summary: truncateText(content || '文件处理请求')
+            };
+
+            taskQueue.push(task);
+            renderTaskBoard();
+        }
+
+        function completeNextTask(agentId, replyText) {
+            const target = taskQueue.find(task => task.agent === agentId && (task.status === 'queued' || task.status === 'processing'));
+            if (!target) return;
+            target.status = 'completed';
+            target.updatedAt = Date.now();
+            if (replyText) {
+                target.summary = truncateText(replyText);
+            }
+            renderTaskBoard();
+            // 5秒后再次尝试渲染，以清除过期的任务卡片
+            setTimeout(() => renderTaskBoard(), 5100);
+        }
+
+        function failNextTask(agentId, reason) {
+            const target = taskQueue.find(task => task.agent === agentId && (task.status === 'queued' || task.status === 'processing'));
+            if (!target) return;
+            target.status = 'failed';
+            target.updatedAt = Date.now();
+            if (reason) {
+                target.summary = truncateText(reason);
+            }
+            renderTaskBoard();
+            // 5秒后再次尝试渲染，以清除过期的任务卡片
+            setTimeout(() => renderTaskBoard(), 5100);
+        }
+
+        async function checkAuth() {
+            const response = await fetch('/api/auth/me', { credentials: 'include' });
+            const result = await response.json();
+            console.log('[DEBUG checkAuth] API response:', result);
+            if (result.authenticated) {
+                isAuthenticated = true;
+                currentUser = result.user;
+                document.getElementById('authOverlay').classList.remove('show');
+                
+                // 设置头像图标
+                const avatars = { 'ops': '🛠️', 'dept_head': '📋', 'user': '👤' };
+                document.getElementById('userAvatar').textContent = avatars[result.user.role] || '👤';
+                
+                const displayName = result.user.name ? `${result.user.name} (${result.user.username})` : result.user.username;
+                console.log('[DEBUG checkAuth] Setting display name to:', displayName);
+                document.getElementById('currentUser').textContent = displayName;
+                const roleLabels = { 'ops': '管理员', 'dept_head': '主管', 'user': '用户' };
+                document.getElementById('currentUserId').textContent = `${roleLabels[result.user.role] || '用户'} ID: ${result.user.id}`;
+                updateRoleBasedUI(result.user);
+                if (!socket.connected) socket.connect();
+                // 调试栏更新逻辑已禁用
+                return true;
+            }
+            isAuthenticated = false;
+            currentUser = null;
+            renderedMessageIds.clear();
+            document.getElementById('authOverlay').classList.add('show');
+            document.getElementById('currentUser').textContent = '未登录';
+            document.getElementById('currentUserId').textContent = 'user_id: -';
+            updateRoleBasedUI(null);
+            return false;
+        }
+
+        function updateRoleBasedUI(user) {
+            const quickPrompts = document.getElementById('quickPrompts');
+            const input = document.getElementById('messageInput');
+            
+            quickPrompts.style.display = 'flex';
+            input.placeholder = '例如：请帮我生成本周专利监控报告';
+            
+            // 更新基于角色的UI元素
+            updateUIBasedOnRole();
+        }
+
+        function applyQuickPrompt(text) {
+            const input = document.getElementById('messageInput');
+            input.value = text;
+            input.focus();
+        }
+
+        async function quickLogin(role) {
+            console.log('[DEBUG quickLogin] 被调用, role=' + role);
+            const errorNode = document.getElementById('authError');
+
+            errorNode.textContent = '';
+            if (!role) {
+                errorNode.textContent = '请选择身份';
+                return;
+            }
+
+            const response = await fetch('/api/auth/quick-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ role })
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                errorNode.textContent = result.error || '登录失败';
+                return;
+            }
+
+            // 彻底清理旧用户的残留数据
+            console.log('[DEBUG] 登录成功，清理旧缓存数据...');
+            agentsData = {};
+            renderedMessageIds.clear();
+            const contactsList = document.getElementById('contactsList');
+            if (contactsList) contactsList.innerHTML = '';
+            const messagesContainer = document.getElementById('messages');
+            if (messagesContainer) messagesContainer.innerHTML = '';
+
+            await initializeAfterLogin();
+            console.log('[DEBUG] quickLogin 完成, isAuthenticated=' + isAuthenticated);
+            // 某些浏览器在 Set-Cookie 与随后的请求之间可能需要短暂延迟，
+            // 这里再确保一次消息加载以提高可靠性（避免登录后消息不显示）
+            try {
+                await new Promise(res => setTimeout(res, 150));
+                const finalMsgs = await loadMessages();
+                console.log('[DEBUG quickLogin] final loadMessages returned', finalMsgs ? finalMsgs.length : 0);
+            } catch (err) {
+                console.error('[DEBUG quickLogin] final loadMessages error', err);
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+            // 强制刷新页面，彻底重置所有状态
+            window.location.reload();
+        }
+
+        // --- 个人资料编辑功能 ---
+        let selectedAvatar = '👤';
+
+        function openProfile() {
+            const overlay = document.getElementById('profileOverlay');
+            
+            // 填充用户信息显示区域
+            if (currentUser) {
+                document.getElementById('profileUserId').textContent = currentUser.id;
+                document.getElementById('profileUsernameDisplay').textContent = currentUser.username;
+                document.getElementById('profileUserRole').textContent = getRoleDisplayName(currentUser.role);
+                document.getElementById('profileUserStatus').textContent = '🟢 在线';
+                
+                document.getElementById('profileUsername').value = currentUser.name || '';
+            } else {
+                document.getElementById('profileUserId').textContent = '-';
+                document.getElementById('profileUsernameDisplay').textContent = '-';
+                document.getElementById('profileUserRole').textContent = '-';
+                document.getElementById('profileUserStatus').textContent = '🔴 未登录';
+                
+                document.getElementById('profileUsername').value = '';
+            }
+
+            // 清空密码字段
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            // 尝试读取当前头像
+            const currentAvatarElement = document.getElementById('userAvatar');
+            if (currentAvatarElement) {
+                const currentAvatar = currentAvatarElement.textContent;
+                selectAvatar(currentAvatar);
+            } else {
+                selectAvatar('👤');
+            }
+            
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('active'), 10);
+        }
+
+        function closeProfile() {
+            const overlay = document.getElementById('profileOverlay');
+            overlay.classList.remove('active');
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+        }
+
+        function selectAvatar(emoji) {
+            selectedAvatar = emoji;
+            // 更新 UI 选中状态
+            document.querySelectorAll('.avatar-option').forEach(opt => {
+                if (opt.textContent === emoji) {
+                    opt.classList.add('selected');
+                } else {
+                    opt.classList.remove('selected');
+                }
+            });
+        }
+
+        async function saveProfile() {
+            const newName = document.getElementById('profileUsername').value.trim();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!newName) {
+                alert('请输入常用名');
+                return;
+            }
+
+            // 验证密码修改
+            if (newPassword || currentPassword) {
+                if (!currentPassword) {
+                    alert('修改密码需要输入当前密码');
+                    return;
+                }
+                if (!newPassword) {
+                    alert('请输入新密码');
+                    return;
+                }
+                if (newPassword.length < 6) {
+                    alert('新密码长度至少6位');
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    alert('两次输入的新密码不一致');
+                    return;
+                }
+            }
+
+            console.log('[DEBUG saveProfile] Saving profile with name:', newName);
+
+            const requestData = { name: newName };
+            if (newPassword) {
+                requestData.current_password = currentPassword;
+                requestData.new_password = newPassword;
+            }
+
+            try {
+                // 后端路由现已为 /api/profile
+                const response = await fetch('/api/profile', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(requestData)
+                });
+
+                if (response.ok) {
+                    // 同步到 currentUser 并更新 UI
+                    if (currentUser) {
+                        currentUser.name = newName;
+                        const displayName = `${newName} (${currentUser.username})`;
+                        document.getElementById('currentUser').textContent = displayName;
+                    }
+                    
+                    const sidebarAvatar = document.getElementById('userAvatar');
+                    if (sidebarAvatar) sidebarAvatar.textContent = selectedAvatar;
+
+                    // 本地存储持久化 (头像)
+                    localStorage.setItem('user_profile', JSON.stringify({
+                        avatar: selectedAvatar
+                    }));
+
+                    // 清空密码字段
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+
+                    // 关闭弹窗
+                    closeProfile();
+                    
+                    // 刷新历史消息流中的头像
+                    loadMessages();
+
+                    alert('个人资料保存成功！');
+                } else {
+                    const err = await response.json();
+                    alert(err.error || '保存失败');
+                }
+            } catch (error) {
+                console.error('保存个人资料错误:', error);
+                alert('保存失败，请稍后再试');
+            }
+        }
+
+        // 绑定 ESC 键关闭
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeProfile();
+        });
+        // --- 个人资料编辑功能 结束 ---
+
+        // --- 用户管理功能 ---
+        let currentEditingUserId = null;
+
+        function openUserManagement() {
+            const overlay = document.getElementById('userManagementOverlay');
+            overlay.style.display = 'flex';
+            
+            // 立即清理列表并显示加载占位符，确保界面先响应
+            const userList = document.getElementById('userList');
+            if (userList) {
+                userList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-lightish);">正在尝试连接服务器...</div>';
+            }
+            
+            setTimeout(() => overlay.classList.add('show'), 10);
+            
+            // 异步请求，不阻塞页面显示动画
+            loadUserList();
+        }
+
+        function closeUserManagement() {
+            const overlay = document.getElementById('userManagementOverlay');
+            overlay.classList.remove('show');
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+            closeUserForm();
+        }
+
+        async function loadUserList() {
+            const userList = document.getElementById('userList');
+            if (!userList) return;
+
+            try {
+                // 修正API路径，后端路由为 /api/users
+                const response = await fetch('/api/users', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const users = await response.json();
+                    if (users && users.length > 0) {
+                        renderUserList(users);
+                    } else {
+                        userList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-lightish);">暂无用户数据</div>';
+                    }
+                } else {
+                    const errorMsg = response.status === 403 ? '权限不足' : `读取失败 (HTTP ${response.status})`;
+                    userList.innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <div style="color: #ff4d4f; margin-bottom: 10px;">${errorMsg}</div>
+                            <button onclick="loadUserList()" style="background: var(--brand); color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">重试</button>
+                        </div>`;
+                }
+            } catch (error) {
+                console.error('加载用户列表错误:', error);
+                userList.innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <div style="color: #ff4d4f; margin-bottom: 10px;">网络连接异常</div>
+                        <button onclick="loadUserList()" style="background: var(--brand); color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">重试</button>
+                    </div>`;
+            }
+        }
+
+        function renderUserList(users) {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            
+            users.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                
+                // 转义特殊字符以避免JavaScript注入
+                const escapedUsername = user.username.replace(/'/g, '\\\'');
+                const escapedName = (user.name || '').replace(/'/g, '\\\'');
+                const escapedRole = user.role.replace(/'/g, '\\\'');
+                
+                // 检查是否为默认用户（ID 1-4），限制禁用和删除操作
+                const isDefaultUser = [1, 2, 3, 4].includes(user.id);
+                
+                // 生成用户头像
+                const avatarEmoji = (user.name || user.username).match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu)?.find(Boolean) || (user.name || user.username).charAt(0).toUpperCase();
+                
+                // 根据用户角色设置头像背景色
+                const avatarColors = {
+                    'ops': '#0f766e',
+                    'dept_head': '#f97316', 
+                    'user': '#6b7280'
+                };
+                const avatarColor = avatarColors[user.role] || '#6b7280';
+                
+                userItem.innerHTML = `
+                    <div class="user-avatar" style="background: ${avatarColor}20; color: ${avatarColor}" onclick="showUserDetailInfo(${user.id}, '${escapedUsername}', '${escapedName}', '${escapedRole}', ${user.is_active})">
+                        ${avatarEmoji}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">${user.username} ${user.name ? `(${user.name})` : ''}</div>
+                        <div class="user-details">角色: ${getRoleDisplayName(user.role)} | 状态: ${user.is_active ? '启用' : '禁用'}</div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="user-btn edit" onclick="editUser(${user.id}, '${escapedUsername}', '${escapedName}', '${escapedRole}', ${user.is_active})">编辑</button>
+                        ${!isDefaultUser ? `<button class="user-btn status" onclick="toggleUserStatus(${user.id}, ${user.is_active})">${user.is_active ? '禁用' : '启用'}</button>` : ''}
+                        ${!isDefaultUser ? `<button class="user-btn status" style="background: #fee2e2; color: #dc2626;" onclick="deleteUser(${user.id}, '${escapedUsername}')">删除</button>` : ''}
+                    </div>
+                `;
+                userList.appendChild(userItem);
+            });
+        }
+
+        function getRoleDisplayName(role) {
+            const roleMap = {
+                'user': '普通用户',
+                'dept_head': '部门主管',
+                'ops': '运维人员'
+            };
+            return roleMap[role] || role;
+        }
+
+        function editUser(id, username, name, role, isActive) {
+            currentEditingUserId = id;
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editName').value = name;
+            document.getElementById('editRole').value = role;
+            document.getElementById('editStatus').value = isActive ? '1' : '0';
+            document.getElementById('formTitle').textContent = '编辑用户';
+            document.getElementById('userForm').style.display = 'block';
+        }
+
+        function showUserForm() {
+            currentEditingUserId = null;
+            document.getElementById('editUsername').value = '';
+            document.getElementById('editName').value = '';
+            document.getElementById('editRole').value = 'user';
+            document.getElementById('editStatus').value = '1';
+            document.getElementById('formTitle').textContent = '添加用户';
+            document.getElementById('userForm').style.display = 'block';
+        }
+
+        function closeUserForm() {
+            document.getElementById('userForm').style.display = 'none';
+            currentEditingUserId = null;
+        }
+
+        async function saveUser() {
+            const username = document.getElementById('editUsername').value.trim();
+            const name = document.getElementById('editName').value.trim();
+            const role = document.getElementById('editRole').value;
+            const isActive = document.getElementById('editStatus').value === '1';
+
+            if (!username) {
+                alert('请输入用户名');
+                return;
+            }
+
+            try {
+                let response;
+                if (currentEditingUserId) {
+                    // 编辑用户 - API_URL 已经包含 /api
+                    response = await fetch(`/api/users/${currentEditingUserId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ name: name || null, role })
+                    });
+                } else {
+                    // 添加用户
+                    const password = prompt('请输入用户密码:');
+                    if (!password) return;
+                    
+                    response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ username, name: name || null, role, password })
+                    });
+                }
+
+                if (response.ok) {
+                    alert(currentEditingUserId ? '用户更新成功' : '用户创建成功');
+                    closeUserForm();
+                    loadUserList();
+                    
+                    // 如果编辑的是当前用户，同步更新侧边栏显示
+                    if (currentEditingUserId && currentUser && currentEditingUserId === currentUser.id) {
+                        const displayName = name ? `${name} (${currentUser.username})` : currentUser.username;
+                        console.log('[DEBUG saveUser] Updating current user display name to:', displayName);
+                        document.getElementById('currentUser').textContent = displayName;
+                        // 更新currentUser对象
+                        currentUser.name = name || null;
+                        console.log('[DEBUG saveUser] Updated currentUser.name to:', currentUser.name);
+                    }
+                } else {
+                    const error = await response.json();
+                    alert(error.error || '操作失败');
+                }
+            } catch (error) {
+                console.error('保存用户错误:', error);
+                alert('操作失败');
+            }
+        }
+
+        async function toggleUserStatus(userId, currentStatus) {
+            const newStatus = !currentStatus;
+            try {
+                const response = await fetch(`/api/users/${userId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ is_active: newStatus })
+                });
+
+                if (response.ok) {
+                    loadUserList();
+                } else {
+                    alert('状态更新失败');
+                }
+            } catch (error) {
+                console.error('更新用户状态错误:', error);
+                alert('状态更新失败');
+            }
+        }
+
+        async function deleteUser(userId, username) {
+            if (!confirm(`确定要删除用户 "${username}" 吗？此操作不可撤销。`)) {
+                return;
+            }
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    alert('用户删除成功');
+                    loadUserList();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || '删除失败');
+                }
+            } catch (error) {
+                console.error('删除用户错误:', error);
+                alert('删除失败');
+            }
+        }
+
+        // --- 用户管理功能 结束 ---
+
+        async function initializeAfterLogin() {
+            console.log('[DEBUG initializeAfterLogin] 被调用, isAuth=' + isAuthenticated);
+            // 确保 currentAgent 有值
+            if (!currentAgent) {
+                currentAgent = 'main';
+            }
+            // 清除已渲染记录，确保重新加载
+            renderedMessageIds.clear();
+            document.getElementById('messages').innerHTML = '';
+            console.log('[DEBUG initializeAfterLogin] currentAgent=' + currentAgent);
+            
+            // 先加载 agent 列表获取名称、头像等基础信息
+            console.log('[DEBUG initializeAfterLogin] 加载 agents...');
+            await loadAgents();
+            
+            // 此时 agentsData 已有值，加载最新的预览消息
+            console.log('[DEBUG initializeAfterLogin] 加载最新预览消息...');
+            await updatePreviews();
+            
+            // 正确设置 header
+            setCurrentAgent(currentAgent);
+            
+            console.log('[DEBUG initializeAfterLogin] 加载消息...');
+            await loadMessages();
+            console.log('[DEBUG initializeAfterLogin] 完成');
+            
+            // 根据用户角色显示管理功能
+            updateUIBasedOnRole();
+            
+            // 定期更新预览以确保与最新消息保持一致
+            setInterval(updatePreviews, 30000);
+        }
+
+        function updateUIBasedOnRole() {
+            const sidebarActions = document.getElementById('sidebarActions');
+            if (currentUser && currentUser.role === 'ops') {
+                sidebarActions.style.display = 'flex';
+            } else {
+                sidebarActions.style.display = 'none';
+            }
+        }
+
+        socket.on('agent_changed', (data) => {
+            console.log('Agent 切换到:', data);
+            setCurrentAgent(data.agent_id);
+        });
+
+        // 加载所有 agent 信息
+        async function loadAgents() {
+            try {
+                const resp = await fetch(`/api/agents`, { credentials: 'include' });
+                let agentsList;
+                if (resp.status === 401) {
+                    console.log('[DEBUG loadAgents] 收到 401，重新认证');
+                    await checkAuth();
+                    const retryResp = await fetch(`/api/agents`, { credentials: 'include' });
+                    console.log('[DEBUG loadAgents] 重试结果:', retryResp.status);
+                    if (retryResp.status !== 200) {
+                        console.log('[DEBUG loadAgents] 重试失败，返回');
+                        return;
+                    }
+                    agentsList = await retryResp.json();
+                } else {
+                    agentsList = await resp.json();
+                }
+                agentsData = agentsList || {};
+                renderContactsList();
+
+                // 页面加载后加入默认聊天室
+                // 只加入私有房间（用户自己的消息）
+                if (currentUser && currentUser.id) {
+                    socket.emit('join_room', `agent_${currentAgent}_user_${currentUser.id}`);
+                    // 不再盲目加入公共 agent_${currentAgent} 房间，避免收到他人消息广播
+                } else {
+                    socket.emit('join_room', `agent_${currentAgent}`);
+                }
+            } catch (error) {
+                console.error('加载 agent 失败:', error);
+            }
+        }
+
+        // 异步更新侧边栏预览信息（直接从 /messages 获取最新消息，确保 100% 隔离）
+        async function updatePreviews() {
+            if (!currentUser || !currentUser.id) return;
+            console.log('[DEBUG] 开始为用户 ' + currentUser.id + ' 更新预览...');
+            for (const agentId of Object.keys(agentsData)) {
+                try {
+                    // 强制增加随机参数或时间戳防止浏览器缓存 API 结果
+                    // 2026-04-02: 使用绝对 /api 路径确保环境兼容性
+                    const resp = await fetch(`/api/messages?agent=${agentId}&limit=1&t=${Date.now()}`, { credentials: 'include' });
+                    if (resp.ok) {
+                        const msgs = await resp.json();
+                        if (msgs && msgs.length > 0) {
+                            const last = msgs[msgs.length - 1];
+                            // 再次校验消息是否属于该用户
+                            if (last.user_id === currentUser.id || !last.user_id) {
+                                agentsData[agentId].last_message = last.content;
+                                agentsData[agentId].last_time = last.timestamp;
+                            }
+                        } else {
+                            agentsData[agentId].last_message = '暂无消息';
+                            agentsData[agentId].last_time = null;
+                        }
+                    }
+                } catch (err) {
+                    console.error(`[DEBUG] 更新 Agent ${agentId} 预览失败:`, err);
+                }
+            }
+            renderContactsList();
+        }
+
+        // 渲染联系人列表
+        function renderContactsList() {
+            const container = document.getElementById('contactsList');
+            container.innerHTML = '';
+            
+            for (const [agentId, agentInfo] of Object.entries(agentsData)) {
+                const contactItem = document.createElement('div');
+                contactItem.className = `contact-item ${agentId === currentAgent ? 'active' : ''}`;
+                contactItem.onclick = () => switchAgent(agentId);
+                
+                const avatarEmoji = agentInfo.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu)?.find(Boolean) || agentInfo.name.charAt(0);
+                
+                contactItem.innerHTML = `
+                    <div class="contact-avatar" style="background: ${agentInfo.color}20; color: ${agentInfo.color}" onclick="showUserDetail('${agentId}'); event.stopPropagation();">
+                        ${avatarEmoji}
+                    </div>
+                    <div class="contact-info">
+                        <div class="contact-name">${agentInfo.name}</div>
+                        <div class="contact-last-message">${agentInfo.last_message}</div>
+                    </div>
+                    ${agentInfo.unread_count > 0 ? `<span class="unread-badge">${agentInfo.unread_count}</span>` : ''}
+                    ${agentInfo.last_time ? `<div class="contact-time">${formatTimeShort(agentInfo.last_time)}</div>` : ''}
+                `;
+                
+                container.appendChild(contactItem);
+            }
+        }
+
+        // 显示当前用户详细信息
+        function showCurrentUserDetail() {
+            if (!currentUser) return;
+            
+            const avatarEmoji = currentUser.name ? (currentUser.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu)?.find(Boolean) || currentUser.name.charAt(0)) : '👤';
+            
+            document.getElementById('userDetailAvatar').style.background = '#0f766e20';
+            document.getElementById('userDetailAvatar').style.color = '#0f766e';
+            document.getElementById('userDetailAvatar').textContent = avatarEmoji;
+            document.getElementById('userDetailName').textContent = currentUser.name || currentUser.username || '未设置';
+            document.getElementById('userDetailId').textContent = `ID: ${currentUser.id}`;
+            document.getElementById('userDetailStatus').textContent = '🟢 在线';
+            document.getElementById('userDetailLastTime').textContent = '当前在线';
+            document.getElementById('userDetailUsername').textContent = currentUser.username;
+            document.getElementById('userDetailLastMessage').textContent = '当前在线用户';
+            
+            // 为当前用户显示编辑按钮
+            const buttonsContainer = document.querySelector('#userDetailOverlay .user-detail-card > div:last-child');
+            buttonsContainer.innerHTML = `
+                <button class="user-detail-close detail-secondary-btn" onclick="closeUserDetail()">关闭</button>
+                <button class="detail-primary-btn" onclick="openProfile()">编辑资料</button>
+            `;
+            
+            document.getElementById('userDetailOverlay').classList.add('show');
+        }
+
+        // 显示用户详细信息
+        function showUserDetailInfo(userId, username, name, role, isActive) {
+            const avatarEmoji = (name || username).match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu)?.find(Boolean) || (name || username).charAt(0).toUpperCase();
+            
+            // 根据用户角色设置头像背景色
+            const avatarColors = {
+                'ops': '#0f766e',
+                'dept_head': '#f97316', 
+                'user': '#6b7280'
+            };
+            const avatarColor = avatarColors[role] || '#6b7280';
+            
+            document.getElementById('userDetailAvatar').style.background = avatarColor + '20';
+            document.getElementById('userDetailAvatar').style.color = avatarColor;
+            document.getElementById('userDetailAvatar').textContent = avatarEmoji;
+            document.getElementById('userDetailName').textContent = name || username;
+            document.getElementById('userDetailId').textContent = `ID: ${userId}`;
+            document.getElementById('userDetailStatus').textContent = isActive ? '🟢 启用' : '🔴 禁用';
+            document.getElementById('userDetailLastTime').textContent = `注册时间: ${new Date().toLocaleDateString('zh-CN')}`; // 这里可以从用户数据获取真实注册时间
+            document.getElementById('userDetailUsername').textContent = username;
+            document.getElementById('userDetailLastMessage').textContent = `角色: ${getRoleDisplayName(role)}`;
+            document.getElementById('userDetailLastMessage').textContent = `角色: ${getRoleDisplayName(role)}`;
+            
+            // 隐藏编辑资料按钮，显示管理操作按钮
+            const buttonsContainer = document.querySelector('#userDetailOverlay .user-detail-card > div:last-child');
+            buttonsContainer.innerHTML = `
+                <button class="user-detail-close detail-secondary-btn" onclick="closeUserDetail()">关闭</button>
+                <button class="detail-primary-btn" onclick="editUser(${userId}, '${username.replace(/'/g, "\\'")}', '${(name || '').replace(/'/g, "\\'")}', '${role}', ${isActive})">编辑用户</button>
+            `;
+            
+            document.getElementById('userDetailOverlay').classList.add('show');
+        }
+
+        // 显示用户详细信息
+        function showUserDetail(agentId) {
+            const agentInfo = agentsData[agentId];
+            if (!agentInfo) return;
+            
+            const avatarEmoji = agentInfo.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu)?.find(Boolean) || agentInfo.name.charAt(0);
+            
+            document.getElementById('userDetailAvatar').style.background = agentInfo.color + '20';
+            document.getElementById('userDetailAvatar').style.color = agentInfo.color;
+            document.getElementById('userDetailAvatar').textContent = avatarEmoji;
+            document.getElementById('userDetailName').textContent = agentInfo.name;
+            document.getElementById('userDetailId').textContent = `Agent ID: ${agentId}`;
+            document.getElementById('userDetailStatus').textContent = '🟢 在线'; // 可以根据实际状态调整
+            document.getElementById('userDetailLastTime').textContent = agentInfo.last_time ? formatTime(agentInfo.last_time) : '无';
+            document.getElementById('userDetailUsername').textContent = agentInfo.unread_count || 0;
+            document.getElementById('userDetailLastMessage').textContent = agentInfo.last_message || '暂无消息';
+            
+            // 为agent显示不同的按钮
+            const buttonsContainer = document.querySelector('#userDetailOverlay .user-detail-card > div:last-child');
+            buttonsContainer.innerHTML = `
+                <button class="user-detail-close detail-secondary-btn" onclick="closeUserDetail()">关闭</button>
+                <button class="detail-primary-btn" onclick="switchAgent('${agentId}'); closeUserDetail();">开始对话</button>
+            `;
+            
+            document.getElementById('userDetailOverlay').classList.add('show');
+        }
+
+        // 关闭用户详细信息
+        function closeUserDetail() {
+            document.getElementById('userDetailOverlay').classList.remove('show');
+        }
+
+        function openChat() {
+            document.querySelector('.app-container').classList.add('show-chat');
+        }
+
+        function closeChat() {
+            document.querySelector('.app-container').classList.remove('show-chat');
+        }
+
+        // 切换 agent
+        function switchAgent(agentId) {
+            if (agentId !== currentAgent) {
+                switchAgentInternal(agentId);
+            }
+            // 手机端点击后进入聊天
+            openChat();
+        }
+
+        function switchAgentInternal(agentId) {
+            // 离开之前的聊天室
+            if (currentAgent) {
+                if (currentUser && currentUser.id) {
+                    socket.emit('leave_room', `agent_${currentAgent}_user_${currentUser.id}`);
+                } else {
+                    socket.emit('leave_room', `agent_${currentAgent}`);
+                }
+            }
+            
+            currentAgent = agentId;
+            
+            // 更新 UI
+            renderContactsList();
+            setCurrentAgent(agentId);
+            
+            // 加入新的聊天室（只加入私有房间）
+            if (currentUser && currentUser.id) {
+                socket.emit('join_room', `agent_${agentId}_user_${currentUser.id}`);
+                // 不加入公共房间 agent_${agentId} 防止收到其他用户的广播
+            } else {
+                socket.emit('join_room', `agent_${agentId}`);
+            }
+            
+            // 通知服务器
+            socket.emit('switch_agent', agentId);
+            
+            // 加载当前 agent 的消息
+            loadMessages();
+            renderTaskBoard();
+        }
+
+        // 设置当前 agent
+        function setCurrentAgent(agentId) {
+            currentAgent = agentId;
+            const agentInfo = agentsData[agentId] || AGENTS_CONFIG[agentId] || { name: '未知', color: '#6c757d' };
+            
+            document.getElementById('currentContactName').textContent = agentInfo.name;
+            document.getElementById('currentContactAvatar').innerHTML = 
+                agentInfo.name.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu)?.find(Boolean) || agentInfo.name.charAt(0);
+            document.getElementById('currentContactAvatar').style.background = agentInfo.color + '20';
+            document.getElementById('currentContactAvatar').style.color = agentInfo.color;
+        }
+
+        // 加载当前 agent 的消息
+        async function loadMessages() {
+            if (!currentAgent) currentAgent = 'main';
+            const thisVersion = ++loadVersion;
+            const thisAgent = currentAgent;
+            
+            // 重置状态
+            hasMoreMessages = true;
+            isLoadingMore = false;
+            renderedMessageIds.clear();
+            document.getElementById('messages').innerHTML = '';
+
+            try {
+                const url = `/api/messages?agent=${thisAgent}&limit=10`;
+                const response = await fetch(url, { credentials: 'include' });
+                if (response.status === 401) {
+                    await checkAuth();
+                    return loadMessages();
+                }
+                const messagesList = await response.json();
+                
+                if (thisVersion !== loadVersion) return null;
+                
+                if (messagesList.length < 10) {
+                    hasMoreMessages = false;
+                }
+                
+                renderMessages(messagesList);
+                
+                // 自动滚动到底部：由于消息可能包含图片或复杂 Markdown，使用 setTimeout 确保渲染完成后滚动
+                const container = document.getElementById('messages');
+                setTimeout(() => {
+                    container.scrollTop = container.scrollHeight;
+                }, 100);
+                
+                return messagesList;
+            } catch (error) {
+                console.error('加载消息失败:', error);
+            }
+            return null;
+        }
+
+        async function loadMoreMessages() {
+            if (isLoadingMore || !hasMoreMessages) return;
+            
+            isLoadingMore = true;
+            const container = document.getElementById('messages');
+            
+            // 找到当前页面最旧的一条渲染出来的 ID
+            // 这里过滤掉非数字的临时 ID
+            const sortedIds = Array.from(renderedMessageIds)
+                                  .filter(id => !String(id).startsWith('local-'))
+                                  .sort((a,b) => a-b);
+            const oldestId = sortedIds[0];
+            
+            if (!oldestId) {
+                isLoadingMore = false;
+                return;
+            }
+
+            // 显示加载条
+            let loadLabel = document.querySelector('.load-more');
+            if (loadLabel) {
+                loadLabel.classList.add('loading');
+                loadLabel.textContent = '正在加载历史记录...';
+            }
+
+            try {
+                const url = `/api/messages?agent=${currentAgent}&limit=10&before_id=${oldestId}`;
+                const response = await fetch(url, { credentials: 'include' });
+                const moreMsgs = await response.json();
+                
+                if (loadLabel) {
+                    loadLabel.classList.remove('loading');
+                    loadLabel.textContent = '点击或上滑加载更多历史记录';
+                }
+                
+                if (moreMsgs.length < 10) {
+                    hasMoreMessages = false;
+                    if (loadLabel) loadLabel.remove();
+                }
+
+                if (moreMsgs.length > 0) {
+                    const oldScrollHeight = container.scrollHeight;
+                    
+                    // 在顶部插入消息
+                    // 注意：API 返回的是按 ID 降序排列的（最新的在前），所以 reverse() 变成升序，逐个 prepend
+                    moreMsgs.reverse().forEach(msg => {
+                        if (!renderedMessageIds.has(msg.id)) {
+                            prependMessage(msg);
+                            renderedMessageIds.add(msg.id);
+                        }
+                    });
+                    
+                    // 保持滚动位置：旧的高度 - 当前高度偏移
+                    requestAnimationFrame(() => {
+                        container.scrollTop = container.scrollHeight - oldScrollHeight;
+                    });
+                }
+            } catch (err) {
+                console.error('加载更多失败:', err);
+            } finally {
+                isLoadingMore = false;
+            }
+        }
+
+        function prependMessage(msg) {
+            if (msg.agent_id !== currentAgent) return;
+            const container = document.getElementById('messages');
+            const msgEl = createMessageElement(msg);
+            
+            // 找到加载按钮
+            const loadBtn = container.querySelector('.load-more');
+            if (loadBtn && loadBtn.nextSibling) {
+                container.insertBefore(msgEl, loadBtn.nextSibling);
+            } else if (loadBtn) {
+                container.appendChild(msgEl);
+            } else {
+                container.insertBefore(msgEl, container.firstChild);
+            }
+        }
+
+        function createMessageElement(msg) {
+            const div = document.createElement('div');
+            // msg.sender is 'user' or 'assistant'
+            div.className = `message ${msg.sender || 'system'}`;
+            
+            let content = '';
+            if (msg.type === 'pending_request') {
+                const lines = (msg.content || '').split('\n');
+                const header = lines.shift() || '';
+                const body = lines.join('\n');
+                const isDeptHead = currentUser && (currentUser.role === 'dept_head' || currentUser.role === 'ops');
+                content = `<div class="pending-item" style="border-left: 3px solid #f97316;">
+                    <div style="font-size:12px;font-weight:600;color:#f97316;margin-bottom:6px;">${sanitize(header)}</div>
+                    <div style="font-size:13px;color:#334155;white-space:pre-wrap;">${sanitize(body)}</div>
+                    ${isDeptHead ? '<div style="margin-top:10px;font-size:12px;color:#94a3b8;">💡 直接回复「批准」或「拒绝」即可审批</div>' : ''}
+                </div>`;
+            } else {
+                content = renderMarkdown(msg.content);
+            }
+            if (msg.file_url) {
+                content += `<div class="file-attachment">📎 <a href="${msg.file_url}" target="_blank">${msg.file_name || '查看文件'}</a></div>`;
+            }
+            
+            // 头像映射
+            let avatar = '👤';
+            if (msg.sender === 'assistant') {
+                avatar = currentAgent === 'main' ? '🏔️' : '🤖';
+            } else if (msg.sender === 'user') {
+                // 优先从 localStorage 读取用户自定义头像
+                const savedProfile = localStorage.getItem('user_profile');
+                if (savedProfile) {
+                    const profile = JSON.parse(savedProfile);
+                    avatar = profile.avatar || '👤';
+                } else if (currentUser && currentUser.role) {
+                    const avatars = { 'ops': '🛠️', 'dept_head': '📋', 'user': '👤' };
+                    avatar = avatars[currentUser.role] || '👤';
+                }
+            }
+            
+            div.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-body">
+                    <div class="message-content">${content}</div>
+                    <div class="message-meta">${formatTime(msg.timestamp)}</div>
+                </div>
+            `;
+            return div;
+        }
+
+        function renderMessages(list) {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            renderedMessageIds.clear();
+            
+            if (hasMoreMessages) {
+                const loadBtn = document.createElement('div');
+                loadBtn.className = 'load-more';
+                loadBtn.textContent = '点击或上滑加载更多历史记录';
+                loadBtn.onclick = loadMoreMessages;
+                container.appendChild(loadBtn);
+            }
+
+            list.forEach(msg => {
+                if (!renderedMessageIds.has(msg.id)) {
+                    appendMessage(msg);
+                }
+            });
+        }
+
+        // 添加消息到界面
+        function appendMessage(msg) {
+            if (!msg) return;
+            if (msg.agent_id !== currentAgent) return;
+            if (renderedMessageIds.has(msg.id)) return;
+            
+            renderedMessageIds.add(msg.id);
+            const container = document.getElementById('messages');
+            const div = createMessageElement(msg);
+            container.appendChild(div);
+            
+            // 实时消息：稍微延迟滚动以确保渲染后的高度计算准确
+            setTimeout(() => {
+                // 如果用户已经往上翻了比较多，不要强制滚到底部（可选交互优化）
+                // 这里为了简单仍然滚到底部，或者仅当用户接近底部时滚动
+                container.scrollTop = container.scrollHeight;
+            }, 60);
+        }
+
+        // 更新联系人状态
+        function updateContactStatus(agentId, status) {
+            if (agentId === currentAgent) {
+                document.getElementById('currentContactStatus').textContent = status;
+            }
+        }
+
+        // 文件选择处理
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                document.getElementById('fileInfo').textContent = `📎 ${file.name} (${formatFileSize(file.size)})`;
+                document.getElementById('filePreview').classList.add('show');
+            }
+        }
+
+        // 移除文件
+        function removeFile() {
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.remove('show');
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            if (sendInFlight) return;
+
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message && !selectedFile) return;
+
+            console.log('发送消息到 agent:', currentAgent, '内容:', message, selectedFile ? `+ 文件：${selectedFile.name}` : '');
+            
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('sendBtn').textContent = '发送中...';
+            document.getElementById('typing').classList.add('show');
+            sendInFlight = true;
+            createTaskCard(message || (selectedFile ? `文件：${selectedFile.name}` : '文件处理请求'));
+            startResponseWatchdog();
+            
+            try {
+                let fileUrl = null;
+                let fileName = null;
+                
+                // 先上传文件（如果有）
+                if (selectedFile) {
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    
+                    const uploadResponse = await fetch(`/api/upload`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: formData
+                    });
+                    
+                    if (uploadResponse.ok) {
+                        const uploadResult = await uploadResponse.json();
+                        fileUrl = uploadResult.url;
+                        fileName = uploadResult.filename;
+                    } else {
+                        // 上传失败，抛出错误
+                        const errorData = await uploadResponse.json().catch(() => ({error: '上传失败'}));
+                        throw new Error(`文件上传失败: ${errorData.error || '未知错误'}`);
+                    }
+                }
+                
+                // 发送消息
+                if (socket.connected) {
+                    socket.emit('send_message', {
+                        agent: currentAgent,
+                        message: message || '[文件]',
+                        file_url: fileUrl,
+                        file_name: fileName
+                    });
+                } else {
+                    // Socket 未连接时，通过 HTTP 发送
+                    const httpData = {
+                        agent: currentAgent,
+                        message: message || '[文件]',
+                        file_url: fileUrl,
+                        file_name: fileName
+                    };
+                    
+                    const httpResponse = await fetch('/api/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(httpData)
+                    });
+                    
+                    if (!httpResponse.ok) {
+                        const errorData = await httpResponse.json().catch(() => ({error: '发送失败'}));
+                        throw new Error(`HTTP 发送失败: ${errorData.error || '未知错误'}`);
+                    }
+                    
+                    const payload = await httpResponse.json();
+                    // 处理 HTTP 响应，模拟 Socket 事件
+                    if (payload.user_message) {
+                        appendMessage(payload.user_message);
+                    }
+                    if (payload.assistant_message) {
+                        appendMessage(payload.assistant_message);
+                    }
+                    completeNextTask(currentAgent, '消息已发送');
+                    resetInputState();
+                }
+                
+                // 清空输入
+                input.value = '';
+                removeFile();
+                
+            } catch (error) {
+                console.error('发送失败:', error);
+                failNextTask(currentAgent, error && error.message ? error.message : '发送失败');
+                alert('发送失败，请重试');
+                resetInputState();
+            }
+        }
+
+        // 处理回车键
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                if (!event.repeat) sendMessage();
+            }
+        }
+
+        // 渲染 Markdown
+        function renderMarkdown(text) {
+            try {
+                // 配置 marked 渲染器以支持在新窗口打开链接
+                const renderer = new marked.Renderer();
+                const originalLink = renderer.link.bind(renderer);
+                renderer.link = (href, title, text) => {
+                    const html = originalLink(href, title, text);
+                    return html.replace('<a ', '<a target="_blank" rel="noopener" ');
+                };
+
+                // 自动将纯文本 URL 转为可点击链接
+                const urlReplaced = (text || '').replace(
+                    /((https?:\/\/)[^\s<]+)/g,
+                    '<a href="$1" target="_blank" rel="noopener">$1</a>'
+                );
+                
+                const raw = marked.parse(urlReplaced, { renderer });
+                return DOMPurify.sanitize(raw, { ADD_ATTR: ['target'] });
+            } catch (e) {
+                console.error('Markdown 渲染失败:', e);
+                return sanitize(text); // 降级为纯文本
+            }
+        }
+
+        // 统一 Sanitizer
+        const sanitize = (text) => {
+            try {
+                return DOMPurify.sanitize(String(text ?? ''));
+            } catch (e) {
+                return String(text ?? '');
+            }
+        };
+
+        // 格式化时间（完整）
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const isToday = date.getDate() === now.getDate() && 
+                date.getMonth() === now.getMonth() && 
+                date.getFullYear() === now.getFullYear();
+            if (isToday) {
+                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            }
+            return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) + ' ' +
+                date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // 格式化时间（简短）
+        function formatTimeShort(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            // 如果是今天
+            if (date.getDate() === now.getDate() && 
+                date.getMonth() === now.getMonth() && 
+                date.getFullYear() === now.getFullYear()) {
+                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // 如果是本周
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            if (date >= startOfWeek) {
+                const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                return days[date.getDay()];
+            }
+            
+            // 否则显示月日
+            return (date.getMonth() + 1) + '-' + date.getDate();
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // 重置输入状态
+        function resetInputState() {
+            clearResponseWatchdog();
+            sendInFlight = false;
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('sendBtn').textContent = '发送';
+            document.getElementById('typing').classList.remove('show');
+        }
+
+        // 页面加载完成后初始化
+        window.onload = async function() {
+            // 登录界面强制清空历史，确保即使 session 还在，也不会在不该显示的时候显示旧内容
+            const isAuthOverlayVisible = document.getElementById('authOverlay').classList.contains('show');
+            if (isAuthOverlayVisible) {
+                agentsData = {};
+                renderedMessageIds.clear();
+                document.getElementById('messages').innerHTML = '';
+                document.getElementById('contactsList').innerHTML = '';
+            }
+
+            const ok = await checkAuth();
+            if (ok) {
+                await initializeAfterLogin();
+            } else {
+                // 如果未登录，确保 UI 是空的
+                agentsData = {};
+                renderContactsList();
+            }
+        };
+    </script>
+</body>
+</html>

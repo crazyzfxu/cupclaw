@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-header">
+        <h2>用户登录</h2>
+        <p>请输入您的账号和密码</p>
+    </div>
+    
+    <form id="loginForm" class="auth-form">
+        <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" name="username" required placeholder="请输入用户名" autocomplete="username">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" required placeholder="请输入密码" autocomplete="current-password">
+        </div>
+        
+        <div id="loginError" class="auth-error"></div>
+        
+        <button type="submit" class="auth-btn">立即登录参与对话</button>
+    </form>
+    
+    <div class="auth-footer">
+        还没有账号？ <a href="/auth/register">立即注册</a>
+        <div class="quick-login-divider">
+            <span>或者使用免密登录</span>
+        </div>
+        <div class="quick-login-options">
+            <button onclick="quickLogin('ops')" class="quick-btn-item ops">🛠️ 运维</button>
+            <button onclick="quickLogin('user')" class="quick-btn-item user">👤 用户</button>
+            <button onclick="quickLogin('dept_head')" class="quick-btn-item dept">📋 主管</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-login-divider {
+    position: relative;
+    text-align: center;
+    margin: 28px 0 16px;
+}
+
+.quick-login-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0,0,0,0.06);
+}
+
+.quick-login-divider span {
+    position: relative;
+    background: #fff;
+    padding: 0 12px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.quick-login-options {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.quick-btn-item {
+    flex: 1;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px 2px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.quick-btn-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.quick-btn-item.ops:hover { color: #9a3412; border-color: #fdba74; background: #fff7ed; }
+.quick-btn-item.user:hover { color: #0f766e; border-color: #5eead4; background: #f0fdfa; }
+.quick-btn-item.dept:hover { color: #6b21a8; border-color: #ddd6fe; background: #faf5ff; }
+</style>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorNode = document.getElementById('loginError');
+    errorNode.textContent = '';
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    try {
+        const response = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (response.ok) {
+            window.location.href = '/';
+        } else {
+            errorNode.textContent = result.error || '登录失败，请重试';
+        }
+    } catch (err) {
+        errorNode.textContent = '网络错误，请稍后再试';
+    }
+});
+
+async function quickLogin(role) {
+    const errorNode = document.getElementById('loginError');
+    try {
+        const response = await fetch('/api/auth/quick-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role })
+        });
+        
+        if (response.ok) {
+            window.location.href = '/';
+        } else {
+            const result = await response.json();
+            errorNode.textContent = result.error || '登录失败';
+        }
+    } catch (err) {
+        errorNode.textContent = '网络错误';
+    }
+}
+</script>
+{% endblock %}
