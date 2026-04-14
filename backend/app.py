@@ -243,8 +243,7 @@ def seed_default_users():
     for username, password, role in [
         (DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD, 'ops'),
         (DEFAULT_USER_USERNAME, DEFAULT_USER_PASSWORD, 'user'),
-        ('dept_head', 'dept123', 'dept_head'),
-        ('buzhouai', 'buzhou123', 'dept_head')
+        ('dept_head', 'dept123', 'dept_head')
     ]:
         cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
         if cursor.fetchone() is None:
@@ -1768,10 +1767,9 @@ def delete_user(user_id):
     seed_usernames = [
         DEFAULT_ADMIN_USERNAME, 
         DEFAULT_USER_USERNAME, 
-        'dept_head', 
-        'buzhouai'
+        'dept_head'
     ]
-    
+
     # 规则：禁止删除默认/种子用户（体验账号），避免误删系统基础账号
     if target_username in seed_usernames:
         conn.close()
